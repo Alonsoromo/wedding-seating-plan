@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Users } from "@phosphor-icons/react";
 import { useState } from 'react';
 import { GuestCard } from './GuestCard';
+import { ExportPDF } from './ExportPDF';
 
 interface Guest {
   id: string;
@@ -19,6 +20,8 @@ interface GuestPanelProps {
   onAddTable: () => void;
   totalGuests: number;
   totalTables: number;
+  tables: { id: number; guests: (Guest | null)[] }[];
+  allGuests: Guest[];
 }
 
 export function GuestPanel({ 
@@ -28,7 +31,9 @@ export function GuestPanel({
   onGenerateTables,
   onAddTable,
   totalGuests,
-  totalTables 
+  totalTables,
+  tables,
+  allGuests
 }: GuestPanelProps) {
   const [newGuestName, setNewGuestName] = useState('');
 
@@ -131,6 +136,10 @@ export function GuestPanel({
 
         {totalTables > 0 && (
           <>
+            <Separator />
+            <div className="space-y-3">
+              <ExportPDF tables={tables} guests={allGuests} />
+            </div>
             <Separator />
             <div className="text-xs text-muted-foreground space-y-1">
               <p>💡 Arrastra invitados a las mesas</p>

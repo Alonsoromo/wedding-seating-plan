@@ -2,6 +2,7 @@ import { useKV } from '@github/spark/hooks';
 import { useState, useEffect } from 'react';
 import { TableCircle } from './components/TableCircle';
 import { GuestPanel } from './components/GuestPanel';
+import { ExportPDF } from './components/ExportPDF';
 import { Button } from './components/ui/button';
 import { ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -187,6 +188,8 @@ function App() {
             onAddTable={addSingleTable}
             totalGuests={(guests || []).length}
             totalTables={(tables || []).length}
+            tables={tables || []}
+            allGuests={guests || []}
           />
 
           {/* Tables Area */}
@@ -211,14 +214,17 @@ function App() {
                   <h2 className="text-2xl font-semibold text-foreground">
                     Distribución de Mesas
                   </h2>
-                  <Button 
-                    variant="outline" 
-                    onClick={resetAll}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <ArrowClockwise className="mr-2" size={16} />
-                    Reiniciar Todo
-                  </Button>
+                  <div className="flex gap-3">
+                    <ExportPDF tables={tables || []} guests={guests || []} />
+                    <Button 
+                      variant="outline" 
+                      onClick={resetAll}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <ArrowClockwise className="mr-2" size={16} />
+                      Reiniciar Todo
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
