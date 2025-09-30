@@ -48,14 +48,26 @@ function App() {
   };
 
   const generateTables = () => {
-    const numberOfTables = Math.ceil((guests || []).length / 10);
-    const newTables: Table[] = Array.from({ length: numberOfTables }, (_, index) => ({
+    const guestCount = (guests || []).length;
+    const suggestedTables = guestCount === 0 ? 1 : Math.ceil(guestCount / 10);
+    const newTables: Table[] = Array.from({ length: suggestedTables }, (_, index) => ({
       id: index + 1,
       guests: Array(10).fill(null)
     }));
     
     setTables(newTables);
-    toast.success(`${numberOfTables} mesas generadas`);
+    toast.success(`${suggestedTables} mesa${suggestedTables === 1 ? '' : 's'} generada${suggestedTables === 1 ? '' : 's'}`);
+  };
+
+  const addSingleTable = () => {
+    const nextTableId = Math.max(0, ...(tables || []).map(t => t.id)) + 1;
+    const newTable: Table = {
+      id: nextTableId,
+      guests: Array(10).fill(null)
+    };
+    
+    setTables(currentTables => [...(currentTables || []), newTable]);
+    toast.success(`Mesa ${nextTableId} agregada`);
   };
 
   const assignGuestToTable = (tableId: number, position: number, guest: Guest) => {
@@ -172,6 +184,7 @@ function App() {
             onAddGuest={addGuest}
             onRemoveGuest={removeGuest}
             onGenerateTables={generateTables}
+            onAddTable={addSingleTable}
             totalGuests={(guests || []).length}
             totalTables={(tables || []).length}
           />

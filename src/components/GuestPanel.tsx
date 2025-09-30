@@ -16,6 +16,7 @@ interface GuestPanelProps {
   onAddGuest: (name: string) => void;
   onRemoveGuest: (guestId: string) => void;
   onGenerateTables: () => void;
+  onAddTable: () => void;
   totalGuests: number;
   totalTables: number;
 }
@@ -25,6 +26,7 @@ export function GuestPanel({
   onAddGuest, 
   onRemoveGuest, 
   onGenerateTables,
+  onAddTable,
   totalGuests,
   totalTables 
 }: GuestPanelProps) {
@@ -76,15 +78,27 @@ export function GuestPanel({
             </Button>
           </div>
           
-          {totalGuests > 0 && (
+          <div className="flex gap-2">
             <Button 
               onClick={onGenerateTables}
-              className="w-full bg-accent hover:bg-accent/90"
+              className="flex-1 bg-accent hover:bg-accent/90"
               variant="default"
+              disabled={totalGuests === 0}
             >
-              Generar Mesas ({Math.ceil(totalGuests / 10)})
+              {totalGuests > 0 
+                ? `Generar Mesas (${Math.ceil(totalGuests / 10)})` 
+                : "Generar Mesas"
+              }
             </Button>
-          )}
+            <Button 
+              onClick={onAddTable}
+              variant="outline"
+              size="icon"
+              title="Agregar mesa individual"
+            >
+              <Plus />
+            </Button>
+          </div>
         </div>
 
         <Separator />
@@ -115,11 +129,12 @@ export function GuestPanel({
           )}
         </div>
 
-        {totalGuests > 0 && (
+        {totalTables > 0 && (
           <>
             <Separator />
             <div className="text-xs text-muted-foreground space-y-1">
               <p>💡 Arrastra invitados a las mesas</p>
+              <p>💡 Usa el botón + para agregar más mesas</p>
               <p>💡 Cada mesa tiene capacidad para 10 personas</p>
             </div>
           </>
