@@ -21,6 +21,13 @@ interface ExportPDFProps {
 export function ExportPDF({ tables, guests }: ExportPDFProps) {
   const [isExporting, setIsExporting] = useState(false);
 
+  // Helper function to clean text for PDF compatibility
+  const cleanTextForPDF = (text: string): string => {
+    return text
+      .replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ\-.,()]/g, '') // Keep only alphanumeric, spaces, and common Spanish characters
+      .trim();
+  };
+
   const exportToPDF = async () => {
     setIsExporting(true);
     toast.info("Preparando descarga del PDF...");
@@ -31,6 +38,10 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
       const jsPDF = jsPDFModule.default;
       
       const pdf = new jsPDF();
+      
+      // Add support for special characters and accents
+      pdf.setFont("helvetica", "normal");
+      
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
@@ -42,7 +53,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(24);
       pdf.setTextColor(255, 255, 255);
-      pdf.text("🎊 Planificación de Mesas 🎊", pageWidth / 2, 22, { align: "center" });
+      pdf.text("PLANIFICACION DE MESAS", pageWidth / 2, 22, { align: "center" });
       
       // Date with styling
       pdf.setFont("helvetica", "normal");
@@ -63,7 +74,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(80, 80, 80);
-        pdf.text(`📋 Lista de Invitados (${guests.length} total)`, 20, yPos);
+        pdf.text(`LISTA DE INVITADOS (${guests.length} total)`, 20, yPos);
         yPos += 15;
         
         pdf.setFont("helvetica", "normal");
@@ -79,7 +90,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
               pdf.addPage();
               yPos = 30;
             }
-            pdf.text(`${index.toString().padStart(2, '0')}. ${guest.name}`, 25, yPos);
+            pdf.text(`${index.toString().padStart(2, '0')}. ${cleanTextForPDF(guest.name)}`, 25, yPos);
             yPos += 7;
             index++;
           }
@@ -103,15 +114,15 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(14);
         pdf.setTextColor(60, 60, 60);
-        pdf.text("📊 Resumen del Evento", 20, yPos + 5);
+        pdf.text("RESUMEN DEL EVENTO", 20, yPos + 5);
         
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(11);
         pdf.setTextColor(80, 80, 80);
-        pdf.text(`• Total de invitados: ${guests.length}`, 20, yPos + 15);
-        pdf.text(`• Invitados asignados: ${assignedGuests}`, 20, yPos + 22);
-        pdf.text(`• Mesas completas: ${completeTables} de ${tables.length}`, 105, yPos + 15);
-        pdf.text(`• Invitados sin asignar: ${guests.length - assignedGuests}`, 105, yPos + 22);
+        pdf.text(`Total de invitados: ${guests.length}`, 20, yPos + 15);
+        pdf.text(`Invitados asignados: ${assignedGuests}`, 20, yPos + 22);
+        pdf.text(`Mesas completas: ${completeTables} de ${tables.length}`, 105, yPos + 15);
+        pdf.text(`Invitados sin asignar: ${guests.length - assignedGuests}`, 105, yPos + 22);
         
         yPos += 45;
         
@@ -119,7 +130,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(80, 80, 80);
-        pdf.text("🪑 Distribución por Mesa", 20, yPos);
+        pdf.text("DISTRIBUCION POR MESA", 20, yPos);
         yPos += 15;
         
         for (const table of tables) {
@@ -140,7 +151,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
-          const tableStatus = isComplete ? "✅" : occupiedSeats.length === 0 ? "⭕" : "🔄";
+          const tableStatus = isComplete ? "[COMPLETA]" : occupiedSeats.length === 0 ? "[VACIA]" : "[INCOMPLETA]";
           pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/10 personas`, 20, yPos + 5);
           yPos += 17;
           
@@ -160,10 +171,10 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
             
             for (let i = 0; i < maxRows; i++) {
               if (leftColumn[i]) {
-                pdf.text(`   • ${leftColumn[i].name}`, 25, yPos);
+                pdf.text(`- ${cleanTextForPDF(leftColumn[i].name)}`, 25, yPos);
               }
               if (rightColumn[i]) {
-                pdf.text(`   • ${rightColumn[i].name}`, 110, yPos);
+                pdf.text(`- ${cleanTextForPDF(rightColumn[i].name)}`, 110, yPos);
               }
               yPos += 6;
             }
@@ -194,7 +205,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
-          pdf.text(`⏳ Invitados Pendientes de Asignar (${unassignedGuests.length})`, 20, yPos + 5);
+          pdf.text(`INVITADOS PENDIENTES DE ASIGNAR (${unassignedGuests.length})`, 20, yPos + 5);
           yPos += 17;
           
           pdf.setFont("helvetica", "normal");
@@ -212,10 +223,10 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
               yPos = 30;
             }
             if (leftCol[i]) {
-              pdf.text(`   • ${leftCol[i].name}`, 25, yPos);
+              pdf.text(`- ${cleanTextForPDF(leftCol[i].name)}`, 25, yPos);
             }
             if (rightCol[i]) {
-              pdf.text(`   • ${rightCol[i].name}`, 110, yPos);
+              pdf.text(`- ${cleanTextForPDF(rightCol[i].name)}`, 110, yPos);
             }
             yPos += 6;
           }
@@ -229,7 +240,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
         pdf.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: "center" });
-        pdf.text("Generado con ❤️ por Planificador de Mesas", pageWidth / 2, pageHeight - 5, { align: "center" });
+        pdf.text("Generado con Planificador de Mesas", pageWidth / 2, pageHeight - 5, { align: "center" });
       }
       
       // Save the PDF - this will trigger browser download
