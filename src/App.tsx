@@ -150,9 +150,7 @@ function App() {
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="font-playfair text-4xl font-semibold text-foreground mb-2">
-            Planificador de Mesas
-          </h1>
+          <h1 className="font-playfair text-4xl font-semibold text-foreground mb-2">Boda Sofia y Alonso</h1>
           <p className="text-muted-foreground">
             Organiza a tus invitados en mesas de 10 personas de manera visual y sencilla
           </p>
