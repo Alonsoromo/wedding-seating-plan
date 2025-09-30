@@ -24,6 +24,14 @@ function App() {
   const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null);
   const [draggedFromTable, setDraggedFromTable] = useState<{tableId: number, position: number} | null>(null);
 
+  // Show confirmation when data loads
+  useEffect(() => {
+    if (guests && guests.length > 0) {
+      console.log(`Datos cargados: ${guests.length} invitados, ${tables?.length || 0} mesas`);
+      toast.success(`Datos cargados: ${guests.length} invitados y ${tables?.length || 0} mesas`);
+    }
+  }, []);
+
 
 
   const addGuest = (name: string) => {
@@ -39,6 +47,7 @@ function App() {
   };
 
   const removeGuest = (guestId: string) => {
+    // Remove from guest list
     setGuests(currentGuests => (currentGuests || []).filter(g => g.id !== guestId));
     
     // Remove from tables if assigned
@@ -78,19 +87,17 @@ function App() {
   };
 
   const assignGuestToTable = (tableId: number, position: number, guest: Guest) => {
-    // Remove guest from other tables first
-    setTables(currentTables =>
-      (currentTables || []).map(table => ({
+    // Update tables in a single operation to ensure consistency
+    setTables(currentTables => {
+      const updatedTables = (currentTables || []).map(table => ({
         ...table,
         guests: table.guests.map(g => 
-          g && g.id === guest.id ? null : g
+          g && g.id === guest.id ? null : g // Remove from other positions
         )
-      }))
-    );
+      }));
 
-    // Then assign to new position
-    setTables(currentTables =>
-      (currentTables || []).map(table =>
+      // Then assign to new position
+      return updatedTables.map(table =>
         table.id === tableId
           ? {
               ...table,
@@ -99,8 +106,8 @@ function App() {
               )
             }
           : table
-      )
-    );
+      );
+    });
 
     toast.success(`${guest.name} asignado a Mesa ${tableId}`);
   };
