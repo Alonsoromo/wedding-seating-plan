@@ -91,7 +91,7 @@ export function GuestPanel({
               disabled={totalGuests === 0}
             >
               {totalGuests > 0 
-                ? `Generar Mesas (${Math.ceil(totalGuests / 10)})` 
+                ? `Generar Mesas (${Math.max(2, Math.ceil(totalGuests / 10))})` 
                 : "Generar Mesas"
               }
             </Button>

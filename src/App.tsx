@@ -50,7 +50,8 @@ function App() {
 
   const generateTables = () => {
     const guestCount = (guests || []).length;
-    const suggestedTables = guestCount === 0 ? 1 : Math.ceil(guestCount / 10);
+    // Always generate at least 2 tables if there are guests, or 1 if no guests
+    const suggestedTables = guestCount === 0 ? 1 : Math.max(2, Math.ceil(guestCount / 10));
     const newTables: Table[] = Array.from({ length: suggestedTables }, (_, index) => ({
       id: index + 1,
       guests: Array(10).fill(null)
