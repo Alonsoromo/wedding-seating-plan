@@ -1,8 +1,7 @@
 import { Button } from "./ui/button";
-import { FileText, Download } from "@phosphor-icons/react";
+import { Download } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import jsPDF from 'jspdf';
 
 interface Guest {
   id: string;
@@ -23,19 +22,14 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToPDF = async () => {
-    console.log("Export PDF button clicked", { tablesLength: tables.length });
-    toast.info("Iniciando exportación PDF...");
-    
-    if (!tables.length) {
-      // Create a simple PDF with just guest list if no tables
-      toast.info("Sin mesas configuradas, exportando solo lista de invitados...");
-    }
-
     setIsExporting(true);
-    console.log("Starting PDF export...");
+    toast.info("Preparando descarga del PDF...");
     
     try {
-      console.log("Creating new jsPDF instance");
+      // Dynamic import to ensure jsPDF loads properly
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default;
+      
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -167,27 +161,15 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
         }
       }
       
-      // Save the PDF
+      // Save the PDF - this will trigger browser download
       const fileName = `planificacion-mesas-${new Date().toISOString().split('T')[0]}.pdf`;
-      console.log("Saving PDF with filename:", fileName);
+      pdf.save(fileName);
       
-      // Use a more explicit save method
-      try {
-        pdf.save(fileName);
-        console.log("PDF save() method completed");
-        
-        // Give some time for the download to start
-        setTimeout(() => {
-          toast.success("PDF descargado exitosamente");
-        }, 500);
-        
-      } catch (saveError) {
-        console.error("Error in pdf.save():", saveError);
-        throw new Error(`Error al descargar PDF: ${saveError}`);
-      }
+      toast.success("¡PDF descargado! Revisa tu carpeta de Descargas");
+      
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      toast.error(`Error al exportar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      toast.error("Error al generar el PDF. Inténtalo de nuevo.");
     } finally {
       setIsExporting(false);
     }
@@ -199,17 +181,17 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
       disabled={isExporting}
       variant="default"
       className="flex items-center gap-2"
-      title={!tables.length ? "Agrega mesas para exportar" : "Exportar configuración a PDF"}
+      title="Descarga un PDF con la distribución de mesas y lista de invitados"
     >
       {isExporting ? (
         <>
           <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-          Exportando...
+          Generando PDF...
         </>
       ) : (
         <>
           <Download size={16} />
-          Exportar PDF
+          Descargar PDF
         </>
       )}
     </Button>
