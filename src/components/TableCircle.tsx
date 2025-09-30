@@ -13,21 +13,47 @@ interface TableCircleProps {
   guests: (Guest | null)[];
   onGuestAdd: (position: number, guest: Guest) => void;
   onGuestRemove: (position: number) => void;
+  onGuestDragStart?: (position: number, guest: Guest) => void;
+  onGuestDragEnd?: () => void;
+  draggedGuest?: Guest | null;
 }
 
-export function TableCircle({ tableNumber, guests, onGuestAdd, onGuestRemove }: TableCircleProps) {
+export function TableCircle({ 
+  tableNumber, 
+  guests, 
+  onGuestAdd, 
+  onGuestRemove, 
+  onGuestDragStart,
+  onGuestDragEnd,
+  draggedGuest 
+}: TableCircleProps) {
   const [dragOverPosition, setDragOverPosition] = useState<number | null>(null);
+  const [isDragOverTable, setIsDragOverTable] = useState(false);
   
   const isComplete = guests.filter(g => g !== null).length === 10;
   const guestCount = guests.filter(g => g !== null).length;
+  const hasAvailableSeats = guests.some(g => g === null);
 
   const handleDragOver = (e: React.DragEvent, position: number) => {
     e.preventDefault();
-    setDragOverPosition(position);
+    if (guests[position] === null) { // Only allow drop on empty seats
+      setDragOverPosition(position);
+    }
   };
 
-  const handleDragLeave = () => {
-    setDragOverPosition(null);
+  const handleTableDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (hasAvailableSeats && draggedGuest) {
+      setIsDragOverTable(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're actually leaving the table area
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverPosition(null);
+      setIsDragOverTable(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, position: number) => {
@@ -39,6 +65,7 @@ export function TableCircle({ tableNumber, guests, onGuestAdd, onGuestRemove }: 
     try {
       const guestData = JSON.parse(e.dataTransfer.getData('text/plain'));
       onGuestAdd(position, guestData);
+      onGuestDragEnd?.(); // Clear drag state on successful drop
     } catch (error) {
       console.error('Error parsing dropped guest data:', error);
     }
@@ -63,11 +90,15 @@ export function TableCircle({ tableNumber, guests, onGuestAdd, onGuestRemove }: 
       <div className="relative">
         {/* Table surface */}
         <div 
-          className={`w-48 h-48 rounded-full border-4 ${
+          className={`w-48 h-48 rounded-full border-4 transition-all duration-300 ${
             isComplete 
               ? 'table-complete border-primary' 
+              : isDragOverTable && hasAvailableSeats
+              ? 'table-incomplete border-accent border-dashed animate-pulse'
               : 'table-incomplete border-primary/30'
-          } shadow-lg transition-all duration-300`}
+          } shadow-lg`}
+          onDragOver={handleTableDragOver}
+          onDragLeave={handleDragLeave}
         />
         
         {/* Table number in center */}
@@ -99,7 +130,17 @@ export function TableCircle({ tableNumber, guests, onGuestAdd, onGuestRemove }: 
                 <div className="group relative">
                   <Badge 
                     variant="default" 
-                    className="bg-primary text-primary-foreground px-2 py-1 text-xs max-w-20 truncate"
+                    className={`bg-primary text-primary-foreground px-2 py-1 text-xs max-w-20 truncate cursor-move select-none transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+                      draggedGuest && draggedGuest.id === guest.id ? 'opacity-50 scale-95' : ''
+                    }`}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', JSON.stringify(guest));
+                      onGuestDragStart?.(index, guest);
+                    }}
+                    onDragEnd={() => {
+                      onGuestDragEnd?.();
+                    }}
                   >
                     {guest.name}
                   </Badge>
@@ -115,7 +156,9 @@ export function TableCircle({ tableNumber, guests, onGuestAdd, onGuestRemove }: 
               ) : (
                 <div 
                   className={`w-10 h-8 rounded border-2 border-dashed transition-all duration-200 ${
-                    isDragOver 
+                    isDragOverTable && hasAvailableSeats
+                      ? 'border-accent bg-accent/20 animate-pulse'
+                      : isDragOver 
                       ? 'border-accent bg-accent/20 scale-110' 
                       : 'border-border bg-muted/50 hover:border-primary/50'
                   }`}

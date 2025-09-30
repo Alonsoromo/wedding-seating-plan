@@ -27,11 +27,12 @@ Una aplicación visual e intuitiva para organizar invitados en mesas de 10 perso
 - Success criteria: Mesas circulares visibles con espacios para 10 invitados cada una
 
 **Asignación Visual**
-- Functionality: Drag & drop de invitados a posiciones específicas en mesas
-- Purpose: Organizar invitados considerando relaciones y preferencias
-- Trigger: Arrastrar invitado desde panel lateral a mesa
-- Progression: Click invitado → arrastrar → hover sobre posición → soltar → confirmación visual
-- Success criteria: Invitado aparece en posición de mesa, actualización en tiempo real
+- Functionality: Drag & drop de invitados a posiciones específicas en mesas y entre mesas
+- Purpose: Organizar invitados considerando relaciones y preferencias con flexibilidad total
+- Trigger: Arrastrar invitado desde panel lateral a mesa O entre posiciones de diferentes mesas
+- Progression: Click invitado → arrastrar → hover sobre posición → soltar → confirmación visual → actualización automática
+- Success criteria: Invitado aparece en nueva posición de mesa, se remueve automáticamente de posición anterior, indicador visual durante arrastre
+- **New Enhancement**: Los invitados ya asignados a mesas pueden ser arrastrados directamente entre diferentes mesas sin necesidad de desasignar primero
 
 **Vista General**
 - Functionality: Visualización completa del layout del salón con todas las mesas
@@ -44,8 +45,10 @@ Una aplicación visual e intuitiva para organizar invitados en mesas de 10 perso
 
 - **Mesas incompletas**: Resaltar mesas con menos de 10 personas en color diferente
 - **Invitados sin mesa**: Panel lateral siempre visible con invitados no asignados
-- **Cambio de planes**: Permitir mover invitados entre mesas fácilmente
+- **Cambio de planes**: Permitir mover invitados entre mesas fácilmente con drag & drop directo
 - **Eliminación de invitados**: Reorganizar automáticamente si se elimina alguien ya asignado
+- **Indicador de arrastre**: Mostrar visualmente qué invitado se está moviendo y dónde se puede soltar
+- **Validación de posiciones**: Solo permitir soltar en posiciones vacías, con feedback visual claro
 
 ## Design Direction
 

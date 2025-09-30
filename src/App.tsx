@@ -21,6 +21,7 @@ function App() {
   const [guests, setGuests] = useKV<Guest[]>("wedding-guests", []);
   const [tables, setTables] = useKV<Table[]>("wedding-tables", []);
   const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null);
+  const [draggedFromTable, setDraggedFromTable] = useState<{tableId: number, position: number} | null>(null);
 
   const addGuest = (name: string) => {
     const newGuest: Guest = {
@@ -83,6 +84,16 @@ function App() {
     );
 
     toast.success(`${guest.name} asignado a Mesa ${tableId}`);
+  };
+
+  const handleGuestDragStart = (tableId: number, position: number, guest: Guest) => {
+    setDraggedGuest(guest);
+    setDraggedFromTable({ tableId, position });
+  };
+
+  const handleGuestDragEnd = () => {
+    setDraggedGuest(null);
+    setDraggedFromTable(null);
   };
 
   const removeGuestFromTable = (tableId: number, position: number) => {
@@ -148,6 +159,13 @@ function App() {
         </div>
 
         <div className="flex gap-8 justify-center">
+          {/* Drag indicator */}
+          {draggedGuest && (
+            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-accent text-accent-foreground px-4 py-2 rounded-lg shadow-lg border-2 border-accent animate-bounce">
+              <span className="text-sm font-medium">Arrastrando: {draggedGuest.name}</span>
+            </div>
+          )}
+          
           {/* Guest Panel */}
           <GuestPanel
             unassignedGuests={unassignedGuests}
@@ -202,6 +220,11 @@ function App() {
                       onGuestRemove={(position) => 
                         removeGuestFromTable(table.id, position)
                       }
+                      onGuestDragStart={(position, guest) =>
+                        handleGuestDragStart(table.id, position, guest)
+                      }
+                      onGuestDragEnd={handleGuestDragEnd}
+                      draggedGuest={draggedGuest}
                     />
                   ))}
                 </div>
