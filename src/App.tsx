@@ -4,7 +4,7 @@ import { TableCircle } from './components/TableCircle';
 import { GuestPanel } from './components/GuestPanel';
 import { ExportPDF } from './components/ExportPDF';
 import { Button } from './components/ui/button';
-import { ArrowClockwise, FloppyDisk } from '@phosphor-icons/react';
+import { ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
 
@@ -23,31 +23,8 @@ function App() {
   const [tables, setTables] = useKV<Table[]>("wedding-tables", []);
   const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null);
   const [draggedFromTable, setDraggedFromTable] = useState<{tableId: number, position: number} | null>(null);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Update last saved timestamp when data changes
-  useEffect(() => {
-    if (guests && guests.length > 0) {
-      setLastSaved(new Date());
-    }
-  }, [guests]);
 
-  useEffect(() => {
-    if (tables && tables.length > 0) {
-      setLastSaved(new Date());
-    }
-  }, [tables]);
-
-  // Show welcome message on first load
-  useEffect(() => {
-    if ((guests || []).length === 0 && (tables || []).length === 0) {
-      setTimeout(() => {
-        toast.info("💾 Tus cambios se guardan automáticamente - no perderás tu trabajo", {
-          duration: 5000
-        });
-      }, 1000);
-    }
-  }, []);
 
   const addGuest = (name: string) => {
     const newGuest: Guest = {
@@ -58,7 +35,7 @@ function App() {
       const updatedGuests = [...(currentGuests || []), newGuest];
       return updatedGuests;
     });
-    toast.success(`${name} agregado a la lista - Guardado automáticamente`);
+    toast.success(`${name} agregado a la lista`);
   };
 
   const removeGuest = (guestId: string) => {
@@ -73,7 +50,7 @@ function App() {
         )
       }))
     );
-    toast.success("Invitado eliminado - Guardado automáticamente");
+    toast.success("Invitado eliminado");
   };
 
   const generateTables = () => {
@@ -86,7 +63,7 @@ function App() {
     }));
     
     setTables(newTables);
-    toast.success(`${suggestedTables} mesa${suggestedTables === 1 ? '' : 's'} generada${suggestedTables === 1 ? '' : 's'} - Guardado automáticamente`);
+    toast.success(`${suggestedTables} mesa${suggestedTables === 1 ? '' : 's'} generada${suggestedTables === 1 ? '' : 's'}`);
   };
 
   const addSingleTable = () => {
@@ -97,7 +74,7 @@ function App() {
     };
     
     setTables(currentTables => [...(currentTables || []), newTable]);
-    toast.success(`Mesa ${nextTableId} agregada - Guardado automáticamente`);
+    toast.success(`Mesa ${nextTableId} agregada`);
   };
 
   const assignGuestToTable = (tableId: number, position: number, guest: Guest) => {
@@ -125,7 +102,7 @@ function App() {
       )
     );
 
-    toast.success(`${guest.name} asignado a Mesa ${tableId} - Guardado automáticamente`);
+    toast.success(`${guest.name} asignado a Mesa ${tableId}`);
   };
 
   const handleGuestDragStart = (tableId: number, position: number, guest: Guest) => {
@@ -156,7 +133,6 @@ function App() {
   const resetAll = () => {
     setGuests([]);
     setTables([]);
-    setLastSaved(null);
     toast.success("Todo reiniciado");
   };
 
@@ -183,19 +159,6 @@ function App() {
           <p className="text-muted-foreground">
             Organiza a tus invitados en mesas de 10 personas de manera visual y sencilla
           </p>
-          
-          {/* Save Status Indicator */}
-          {lastSaved && (
-            <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
-              <FloppyDisk size={16} className="text-accent" />
-              <span>
-                Guardado automáticamente a las {lastSaved.toLocaleTimeString('es-ES', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </span>
-            </div>
-          )}
           
           {(guests || []).length > 0 && (
             <div className="flex justify-center gap-6 mt-4 text-sm">
@@ -246,9 +209,6 @@ function App() {
                   </h3>
                   <p className="text-muted-foreground">
                     Agrega los nombres de tus invitados y luego genera las mesas automáticamente.<br/>
-                    <span className="text-xs mt-2 block text-accent font-medium">
-                      💾 Todo se guarda automáticamente
-                    </span>
                   </p>
                 </div>
               </div>
