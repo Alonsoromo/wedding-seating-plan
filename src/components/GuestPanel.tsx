@@ -88,11 +88,13 @@ export function GuestPanel({
               onClick={onGenerateTables}
               className="flex-1 bg-accent hover:bg-accent/90"
               variant="default"
-              disabled={totalGuests === 0}
+              disabled={totalGuests === 0 || totalTables > 0}
             >
-              {totalGuests > 0 
-                ? `Generar Mesas (${Math.max(2, Math.ceil(totalGuests / 10))})` 
-                : "Generar Mesas"
+              {totalTables > 0 
+                ? "Mesas ya generadas" 
+                : totalGuests > 0 
+                  ? `Generar Mesas (${Math.ceil(totalGuests / 8)})` 
+                  : "Generar Mesas"
               }
             </Button>
             <Button 
