@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { TableCircle } from './components/TableCircle';
 import { GuestPanel } from './components/GuestPanel';
 import { ExportPDF } from './components/ExportPDF';
@@ -23,17 +23,6 @@ function App() {
   const [tables, setTables] = useKV<Table[]>("wedding-tables", []);
   const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null);
   const [draggedFromTable, setDraggedFromTable] = useState<{tableId: number, position: number} | null>(null);
-  const hasShownLoadMessage = useRef(false);
-
-  // Show confirmation when data loads from storage (only once on initial load)
-  useEffect(() => {
-    console.log('useEffect triggered - guests:', guests?.length || 0, 'tables:', tables?.length || 0);
-    if (!hasShownLoadMessage.current && guests && guests.length > 0) {
-      console.log(`Datos cargados: ${guests.length} invitados, ${tables?.length || 0} mesas`);
-      toast.success(`Datos cargados: ${guests.length} invitados y ${tables?.length || 0} mesas`);
-      hasShownLoadMessage.current = true;
-    }
-  }, [guests, tables]); // Now properly watches for data changes from useKV
 
 
 
@@ -143,20 +132,7 @@ function App() {
   const resetAll = () => {
     setGuests([]);
     setTables([]);
-    hasShownLoadMessage.current = false; // Reset the message flag too
     toast.success("Todo reiniciado");
-  };
-
-  // Test function to verify data persistence
-  const testPersistence = async () => {
-    console.log('Testing persistence...');
-    console.log('Current guests:', guests);
-    console.log('Current tables:', tables);
-    
-    // Test adding some data
-    const testGuest = { id: 'test-' + Date.now(), name: 'Test Guest' };
-    setGuests(current => [...(current || []), testGuest]);
-    toast.info('Datos de prueba agregados - refresca la página para probar persistencia');
   };
 
   // Get unassigned guests
@@ -242,13 +218,6 @@ function App() {
                     Distribución de Mesas
                   </h2>
                   <div className="flex gap-3">
-                    <Button 
-                      variant="secondary" 
-                      onClick={testPersistence}
-                      size="sm"
-                    >
-                      🧪 Test Persistencia
-                    </Button>
                     <ExportPDF tables={tables || []} guests={guests || []} />
                     <Button 
                       variant="outline" 
