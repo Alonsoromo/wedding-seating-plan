@@ -8,16 +8,8 @@ import { Button } from './components/ui/button';
 import { ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
-
-interface Guest {
-  id: string;
-  name: string;
-}
-
-interface Table {
-  id: number;
-  guests: (Guest | null)[];
-}
+import type { Guest, Table } from './types';
+import { TABLE_CONSTANTS } from './constants';
 
 function App() {
   const [guests, setGuests] = useKV<Guest[]>("wedding-guests", []);
@@ -58,10 +50,10 @@ function App() {
   const generateTables = () => {
     const guestCount = (guests || []).length;
     // Generate based on guest count: 1 table per 8 guests (leaving room for flexibility)
-    const suggestedTables = Math.max(1, Math.ceil(guestCount / 8));
+    const suggestedTables = Math.max(1, Math.ceil(guestCount / TABLE_CONSTANTS.SUGGESTED_GUESTS_PER_TABLE));
     const newTables: Table[] = Array.from({ length: suggestedTables }, (_, index) => ({
       id: index + 1,
-      guests: Array(10).fill(null)
+      guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
     }));
     
     setTables(newTables);
@@ -72,7 +64,7 @@ function App() {
     const nextTableId = Math.max(0, ...(tables || []).map(t => t.id)) + 1;
     const newTable: Table = {
       id: nextTableId,
-      guests: Array(10).fill(null)
+      guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
     };
     
     setTables(currentTables => [...(currentTables || []), newTable]);
@@ -152,7 +144,7 @@ function App() {
   // Get statistics
   const totalAssigned = (guests || []).length - unassignedGuests.length;
   const completeTables = (tables || []).filter(table => 
-    table.guests.filter(g => g !== null).length === 10
+    table.guests.filter(g => g !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE
   ).length;
 
   return (

@@ -1,0 +1,18 @@
+export const TABLE_CONSTANTS = {
+  SEATS_PER_TABLE: 10,
+  SUGGESTED_GUESTS_PER_TABLE: 8,
+  CIRCLE_RADIUS: 80,
+  DEGREES_PER_SEAT: 36, // 360 / 10
+  STARTING_ANGLE: -90 // Start at top
+};
+
+export const DRAG_FEEDBACK = {
+  OPACITY_DRAGGING: 50,
+  SCALE_DRAGGING: 95,
+  SCALE_HOVER: 105
+};
+
+export const SHARE_CODE = {
+  LENGTH: 12,
+  PREFIX: 'share-'
+};

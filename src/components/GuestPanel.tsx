@@ -6,11 +6,8 @@ import { Plus, Users } from "@phosphor-icons/react";
 import { useState } from 'react';
 import { GuestCard } from './GuestCard';
 import { ExportPDF } from './ExportPDF';
-
-interface Guest {
-  id: string;
-  name: string;
-}
+import type { Guest, Table } from '@/types';
+import { TABLE_CONSTANTS } from '@/constants';
 
 interface GuestPanelProps {
   unassignedGuests: Guest[];
@@ -20,7 +17,7 @@ interface GuestPanelProps {
   onAddTable: () => void;
   totalGuests: number;
   totalTables: number;
-  tables: { id: number; guests: (Guest | null)[] }[];
+  tables: Table[];
   allGuests: Guest[];
 }
 
@@ -93,7 +90,7 @@ export function GuestPanel({
               {totalTables > 0 
                 ? "Generar Mesas" 
                 : totalGuests > 0 
-                  ? `Generar Mesas (${Math.ceil(totalGuests / 8)})` 
+                  ? `Generar Mesas (${Math.ceil(totalGuests / TABLE_CONSTANTS.SUGGESTED_GUESTS_PER_TABLE)})` 
                   : "Generar Mesas"
               }
             </Button>
@@ -146,7 +143,7 @@ export function GuestPanel({
             <div className="text-xs text-muted-foreground space-y-1">
               <p>💡 Arrastra invitados a las mesas</p>
               <p>💡 Usa el botón + para agregar más mesas</p>
-              <p>💡 Cada mesa tiene capacidad para 10 personas</p>
+              <p>💡 Cada mesa tiene capacidad para {TABLE_CONSTANTS.SEATS_PER_TABLE} personas</p>
             </div>
           </>
         )}

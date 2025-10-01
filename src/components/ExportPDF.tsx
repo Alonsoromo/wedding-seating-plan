@@ -2,16 +2,8 @@ import { Button } from "./ui/button";
 import { Download } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
-
-interface Guest {
-  id: string;
-  name: string;
-}
-
-interface Table {
-  id: number;
-  guests: (Guest | null)[];
-}
+import type { Guest, Table } from '@/types';
+import { TABLE_CONSTANTS } from '@/constants';
 
 interface ExportPDFProps {
   tables: Table[];
@@ -102,7 +94,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           table.guests.filter(g => g !== null)
         ).length;
         const completeTables = tables.filter(table => 
-          table.guests.filter(g => g !== null).length === 10
+          table.guests.filter(g => g !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE
         ).length;
         
         // Statistics section with background
@@ -141,7 +133,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           }
           
           const occupiedSeats = table.guests.filter(g => g !== null);
-          const isComplete = occupiedSeats.length === 10;
+          const isComplete = occupiedSeats.length === TABLE_CONSTANTS.SEATS_PER_TABLE;
           
           // Table header with colored background
           const tableColor = isComplete ? [144, 238, 144] : [255, 240, 240]; // Light green if complete, light red if not
@@ -152,7 +144,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
           const tableStatus = isComplete ? "[COMPLETA]" : occupiedSeats.length === 0 ? "[VACIA]" : "[INCOMPLETA]";
-          pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/10 personas`, 20, yPos + 5);
+          pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/${TABLE_CONSTANTS.SEATS_PER_TABLE} personas`, 20, yPos + 5);
           yPos += 17;
           
           pdf.setFont("helvetica", "normal");

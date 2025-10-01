@@ -4,16 +4,8 @@ import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Share, Download, Copy } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-
-interface Guest {
-  id: string;
-  name: string;
-}
-
-interface Table {
-  id: number;
-  guests: (Guest | null)[];
-}
+import type { Guest, Table } from '@/types';
+import { SHARE_CODE } from '@/constants';
 
 interface ShareDataProps {
   guests: Guest[];
@@ -44,10 +36,10 @@ export function ShareData({ guests, tables, onLoadData }: ShareDataProps) {
       // Generate a simple share code using a timestamp and basic encoding
       const dataString = JSON.stringify(data);
       const encoded = btoa(dataString);
-      const shortCode = encoded.substring(0, 12).toUpperCase();
+      const shortCode = encoded.substring(0, SHARE_CODE.LENGTH).toUpperCase();
       
       // Store in KV with the share code as key
-      await window.spark.kv.set(`share-${shortCode}`, data);
+      await window.spark.kv.set(`${SHARE_CODE.PREFIX}${shortCode}`, data);
       
       setShareCode(shortCode);
       toast.success('Código de compartir generado');
@@ -70,7 +62,7 @@ export function ShareData({ guests, tables, onLoadData }: ShareDataProps) {
         guests: Guest[];
         tables: Table[];
         timestamp: number;
-      }>(`share-${loadCode.toUpperCase()}`);
+      }>(`${SHARE_CODE.PREFIX}${loadCode.toUpperCase()}`);
       
       if (!data) {
         toast.error('Código no encontrado o expirado');

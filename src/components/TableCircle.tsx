@@ -2,11 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "@phosphor-icons/react";
 import { useState } from 'react';
-
-interface Guest {
-  id: string;
-  name: string;
-}
+import type { Guest } from '@/types';
+import { TABLE_CONSTANTS, DRAG_FEEDBACK } from '@/constants';
 
 interface TableCircleProps {
   tableNumber: number;
@@ -30,7 +27,7 @@ export function TableCircle({
   const [dragOverPosition, setDragOverPosition] = useState<number | null>(null);
   const [isDragOverTable, setIsDragOverTable] = useState(false);
   
-  const isComplete = guests.filter(g => g !== null).length === 10;
+  const isComplete = guests.filter(g => g !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE;
   const guestCount = guests.filter(g => g !== null).length;
   const hasAvailableSeats = guests.some(g => g === null);
 
@@ -71,12 +68,11 @@ export function TableCircle({
     }
   };
 
-  // Calculate positions for 10 seats around a circle
+  // Calculate positions for seats around a circle
   const getSeatPosition = (index: number) => {
-    const angle = (index * 36) - 90; // 360/10 = 36 degrees per seat, start at top
-    const radius = 80;
-    const x = Math.cos(angle * Math.PI / 180) * radius;
-    const y = Math.sin(angle * Math.PI / 180) * radius;
+    const angle = (index * TABLE_CONSTANTS.DEGREES_PER_SEAT) + TABLE_CONSTANTS.STARTING_ANGLE;
+    const x = Math.cos(angle * Math.PI / 180) * TABLE_CONSTANTS.CIRCLE_RADIUS;
+    const y = Math.sin(angle * Math.PI / 180) * TABLE_CONSTANTS.CIRCLE_RADIUS;
     return { x, y };
   };
 
@@ -84,7 +80,7 @@ export function TableCircle({
     <div className="flex flex-col items-center space-y-4">
       <div className="text-center">
         <h3 className="font-semibold text-lg text-foreground">Mesa {tableNumber}</h3>
-        <p className="text-sm text-muted-foreground">{guestCount}/10 invitados</p>
+        <p className="text-sm text-muted-foreground">{guestCount}/{TABLE_CONSTANTS.SEATS_PER_TABLE} invitados</p>
       </div>
       
       <div className="relative">
@@ -109,7 +105,7 @@ export function TableCircle({
         </div>
         
         {/* Guest seats */}
-        {Array.from({ length: 10 }).map((_, index) => {
+        {Array.from({ length: TABLE_CONSTANTS.SEATS_PER_TABLE }).map((_, index) => {
           const position = getSeatPosition(index);
           const guest = guests[index];
           const isDragOver = dragOverPosition === index;
@@ -131,7 +127,7 @@ export function TableCircle({
                   <Badge 
                     variant="default" 
                     className={`bg-primary text-primary-foreground px-2 py-1 text-xs max-w-20 truncate cursor-move select-none transition-all duration-200 hover:scale-105 hover:shadow-lg ${
-                      draggedGuest && draggedGuest.id === guest.id ? 'opacity-50 scale-95' : ''
+                      draggedGuest && draggedGuest.id === guest.id ? `opacity-${DRAG_FEEDBACK.OPACITY_DRAGGING} scale-${DRAG_FEEDBACK.SCALE_DRAGGING}` : ''
                     }`}
                     draggable
                     onDragStart={(e) => {
