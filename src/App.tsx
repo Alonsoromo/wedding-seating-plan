@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { TableCircle } from './components/TableCircle';
 import { GuestPanel } from './components/GuestPanel';
 import { ExportPDF } from './components/ExportPDF';
+import { ShareData } from './components/ShareData';
 import { Button } from './components/ui/button';
 import { ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -135,6 +136,11 @@ function App() {
     toast.success("Todo reiniciado");
   };
 
+  const loadSharedData = (sharedGuests: Guest[], sharedTables: Table[]) => {
+    setGuests(sharedGuests);
+    setTables(sharedTables);
+  };
+
   // Get unassigned guests
   const assignedGuestIds = new Set(
     (tables || []).flatMap(table => 
@@ -218,6 +224,11 @@ function App() {
                     Distribución de Mesas
                   </h2>
                   <div className="flex gap-3">
+                    <ShareData 
+                      guests={guests || []}
+                      tables={tables || []}
+                      onLoadData={loadSharedData}
+                    />
                     <ExportPDF tables={tables || []} guests={guests || []} />
                     <Button 
                       variant="outline" 
