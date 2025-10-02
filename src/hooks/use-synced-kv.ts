@@ -97,26 +97,28 @@ export function useSyncedKV<T>(
       lastUpdateTimestamp.current = timestamp;
 
       // Update local state (which will also persist to KV via useKV)
-      setValue(newValue);
-
-      // Broadcast the change to other tabs/sessions
-      if (channelRef.current) {
-        // If newValue is a function, we need to compute the actual value
+      // We need to capture the actual value to broadcast it
+      setValue((currentValue) => {
         const actualValue = typeof newValue === 'function' 
-          ? (newValue as (oldValue?: T) => T)(value)
+          ? (newValue as (oldValue?: T) => T)(currentValue)
           : newValue;
 
-        const message: SyncMessage<T> = {
-          type: 'UPDATE',
-          key,
-          value: actualValue,
-          timestamp,
-          senderId: SESSION_ID,
-        };
-        channelRef.current.postMessage(message);
-      }
+        // Broadcast the change to other tabs/sessions
+        if (channelRef.current) {
+          const message: SyncMessage<T> = {
+            type: 'UPDATE',
+            key,
+            value: actualValue,
+            timestamp,
+            senderId: SESSION_ID,
+          };
+          channelRef.current.postMessage(message);
+        }
+
+        return actualValue;
+      });
     },
-    [key, setValue, value]
+    [key, setValue]
   );
 
   // Enhanced deleteValue that broadcasts deletion to other tabs
