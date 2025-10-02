@@ -8,6 +8,8 @@ Esta guía te ayudará a desplegar tu aplicación Wedding Table Planner para pro
 
 Esta es la forma más sencilla para desplegar desde GitHub.
 
+**✅ Configuración ya aplicada**: El proyecto ya está configurado correctamente para GitHub Pages con el `base` path en `vite.config.ts`, así que solo necesitas seguir los pasos de habilitación.
+
 #### Pasos:
 
 1. **Fusionar ramas a main:**
@@ -79,6 +81,18 @@ Si el despliegue falla:
 1. Verifica que todas las dependencias estén en `package.json`
 2. Asegúrate de que `npm run build` funcione localmente
 3. Revisa los logs en la pestaña "Actions" (GitHub Pages) o el dashboard de Vercel/Netlify
+
+### Problema: La aplicación despliega pero muestra página en blanco
+
+**Causa**: Los assets (JavaScript y CSS) no se cargan correctamente porque las rutas no están configuradas para el subdirectorio de GitHub Pages.
+
+**Solución aplicada**: 
+- El archivo `vite.config.ts` está configurado con `base: '/wedding-seating-plan/'` para que los assets se generen con la ruta correcta
+- Esto permite que la aplicación funcione en `https://alonsoromo.github.io/wedding-seating-plan/`
+
+**Verificación**:
+1. Después de hacer build con `npm run build`, verifica que en `dist/index.html` los assets tengan rutas como `/wedding-seating-plan/assets/...` y no solo `/assets/...`
+2. Si ves errores 404 en la consola del navegador para los archivos JS/CSS, verifica que el `base` esté configurado correctamente en `vite.config.ts`
 
 ## 🎉 ¡Listo!
 
