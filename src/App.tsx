@@ -22,42 +22,47 @@ function App() {
       id: uuidv4(),
       name
     };
-    setGuests([...guests, newGuest]);
+    setGuests((currentGuests) => [...currentGuests, newGuest]);
   };
 
   const handleRemoveGuest = (guestId: string) => {
     // Remove from guests list
-    setGuests(guests.filter(g => g.id !== guestId));
+    setGuests((currentGuests) => currentGuests.filter(g => g.id !== guestId));
     
     // Remove from any table they're in
-    setTables(tables.map(table => ({
+    setTables((currentTables) => currentTables.map(table => ({
       ...table,
       guests: table.guests.map(g => g?.id === guestId ? null : g)
     })));
   };
 
   const handleGenerateTables = () => {
-    if (guests.length === 0) return;
-    
-    const numberOfTables = Math.ceil(guests.length / TABLE_CONSTANTS.SUGGESTED_GUESTS_PER_TABLE);
-    const newTables: Table[] = Array.from({ length: numberOfTables }, (_, i) => ({
-      id: i + 1,
-      guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
-    }));
-    
-    setTables(newTables);
+    setGuests((currentGuests) => {
+      if (currentGuests.length === 0) return currentGuests;
+      
+      const numberOfTables = Math.ceil(currentGuests.length / TABLE_CONSTANTS.SUGGESTED_GUESTS_PER_TABLE);
+      const newTables: Table[] = Array.from({ length: numberOfTables }, (_, i) => ({
+        id: i + 1,
+        guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
+      }));
+      
+      setTables(newTables);
+      return currentGuests;
+    });
   };
 
   const handleAddTable = () => {
-    const newTable: Table = {
-      id: tables.length + 1,
-      guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
-    };
-    setTables([...tables, newTable]);
+    setTables((currentTables) => {
+      const newTable: Table = {
+        id: currentTables.length + 1,
+        guests: Array(TABLE_CONSTANTS.SEATS_PER_TABLE).fill(null)
+      };
+      return [...currentTables, newTable];
+    });
   };
 
   const handleGuestAdd = (tableId: number, position: number, guest: Guest) => {
-    setTables(tables.map(table => {
+    setTables((currentTables) => currentTables.map(table => {
       if (table.id === tableId) {
         const newGuests = [...table.guests];
         newGuests[position] = guest;
@@ -72,7 +77,7 @@ function App() {
   };
 
   const handleGuestRemove = (tableId: number, position: number) => {
-    setTables(tables.map(table => {
+    setTables((currentTables) => currentTables.map(table => {
       if (table.id === tableId) {
         const newGuests = [...table.guests];
         newGuests[position] = null;
