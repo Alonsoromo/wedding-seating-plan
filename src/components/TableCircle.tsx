@@ -63,8 +63,9 @@ export function TableCircle({
       const guestData = JSON.parse(e.dataTransfer.getData('text/plain'));
       onGuestAdd(position, guestData);
       onGuestDragEnd?.(); // Clear drag state on successful drop
-    } catch (error) {
-      console.error('Error parsing dropped guest data:', error);
+    } catch (_error) {
+      // Silently handle invalid drag data - user can retry
+      onGuestDragEnd?.();
     }
   };
 

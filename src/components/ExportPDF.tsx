@@ -242,8 +242,8 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
       toast.success("¡PDF descargado! Revisa tu carpeta de Descargas");
       
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast.error("Error al generar el PDF. Inténtalo de nuevo.");
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      toast.error(`Error al generar el PDF: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
