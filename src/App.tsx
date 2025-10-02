@@ -1,5 +1,4 @@
 import { useKV } from '@github/spark/hooks';
-import { useState } from 'react';
 import { Button } from './components/ui/button';
 import { ArrowClockwise } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -7,8 +6,8 @@ import { Toaster } from './components/ui/sonner';
 import type { Guest, Table } from './types';
 
 function App() {
-  const [guests, setGuests] = useKV<Guest[]>("wedding-guests", []);
-  const [tables, setTables] = useKV<Table[]>("wedding-tables", []);
+  const [_guests, _setGuests] = useKV<Guest[]>("wedding-guests", []);
+  const [_tables, _setTables] = useKV<Table[]>("wedding-tables", []);
 
   return (
     <div className="min-h-screen bg-background">

@@ -43,7 +43,7 @@ export function ShareData({ guests, tables, onLoadData }: ShareDataProps) {
       
       setShareCode(shortCode);
       toast.success('Código de compartir generado');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error generando código');
     } finally {
       setIsGenerating(false);
@@ -72,7 +72,7 @@ export function ShareData({ guests, tables, onLoadData }: ShareDataProps) {
       onLoadData(data.guests || [], data.tables || []);
       toast.success('Datos cargados exitosamente');
       setLoadCode('');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error cargando datos');
     } finally {
       setIsLoading(false);
