@@ -2,6 +2,7 @@ import { Button } from "./ui/button";
 import { Download } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
 
 interface Guest {
   id: string;
@@ -33,10 +34,6 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
     toast.info("Preparando descarga del PDF...");
     
     try {
-      // Dynamic import to ensure jsPDF loads properly
-      const jsPDFModule = await import('jspdf');
-      const jsPDF = jsPDFModule.default;
-      
       const pdf = new jsPDF();
       
       // Add support for special characters and accents
