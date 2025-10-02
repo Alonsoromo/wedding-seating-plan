@@ -1,4 +1,3 @@
-import { useKV } from '@github/spark/hooks';
 import { Toaster } from './components/ui/sonner';
 import { GuestPanel } from './components/GuestPanel';
 import { TableCircle } from './components/TableCircle';
@@ -6,10 +5,11 @@ import type { Guest, Table } from './types';
 import { TABLE_CONSTANTS } from './constants';
 import { v4 as uuidv4 } from 'uuid';
 import { useState } from 'react';
+import { useSyncedKV } from './hooks/use-synced-kv';
 
 function App() {
-  const [guests, setGuests] = useKV<Guest[]>("wedding-guests", []);
-  const [tables, setTables] = useKV<Table[]>("wedding-tables", []);
+  const [guests, setGuests] = useSyncedKV<Guest[]>("wedding-guests", []);
+  const [tables, setTables] = useSyncedKV<Table[]>("wedding-tables", []);
   const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null);
 
   // Get unassigned guests (not in any table)
