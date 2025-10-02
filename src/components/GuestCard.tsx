@@ -1,12 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "@phosphor-icons/react";
+import type { Guest } from '@/types';
 
 interface GuestCardProps {
-  guest: {
-    id: string;
-    name: string;
-  };
+  guest: Guest;
   onRemove?: () => void;
   isDragging?: boolean;
   showRemove?: boolean;

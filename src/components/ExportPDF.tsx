@@ -99,7 +99,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           table.guests.filter(g => g !== null)
         ).length;
         const completeTables = tables.filter(table => 
-          table.guests.filter(g => g !== null).length === 10
+          table.guests.filter(g => g !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE
         ).length;
         
         // Statistics section with background
@@ -138,7 +138,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           }
           
           const occupiedSeats = table.guests.filter(g => g !== null);
-          const isComplete = occupiedSeats.length === 10;
+          const isComplete = occupiedSeats.length === TABLE_CONSTANTS.SEATS_PER_TABLE;
           
           // Table header with colored background
           const tableColor = isComplete ? [144, 238, 144] : [255, 240, 240]; // Light green if complete, light red if not
@@ -149,7 +149,7 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
           const tableStatus = isComplete ? "[COMPLETA]" : occupiedSeats.length === 0 ? "[VACIA]" : "[INCOMPLETA]";
-          pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/10 personas`, 20, yPos + 5);
+          pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/${TABLE_CONSTANTS.SEATS_PER_TABLE} personas`, 20, yPos + 5);
           yPos += 17;
           
           pdf.setFont("helvetica", "normal");
@@ -247,8 +247,8 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
       toast.success("¡PDF descargado! Revisa tu carpeta de Descargas");
       
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast.error("Error al generar el PDF. Inténtalo de nuevo.");
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      toast.error(`Error al generar el PDF: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
