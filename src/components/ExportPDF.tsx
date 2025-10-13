@@ -1,18 +1,15 @@
 import { Button } from "./ui/button";
 import { Download } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import jsPDF from 'jspdf';
 
-interface Guest {
-  id: string;
-  name: string;
-}
+import { TABLE_CONSTANTS } from "@/constants";
+import type { Guest, Table } from "@/types";
 
-interface Table {
-  id: number;
-  guests: (Guest | null)[];
-}
+const FALLBACK_GUEST_NAME = "Invitado sin nombre";
+const PDF_MARGIN = 15;
+const HEADER_HEIGHT = 35;
+const FOOTER_MARGIN = 10;
 
 interface ExportPDFProps {
   tables: Table[];
@@ -22,64 +19,85 @@ interface ExportPDFProps {
 export function ExportPDF({ tables, guests }: ExportPDFProps) {
   const [isExporting, setIsExporting] = useState(false);
 
-  // Helper function to clean text for PDF compatibility
-  const cleanTextForPDF = (text: string): string => {
-    return text
-      .replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ\-.,()]/g, '') // Keep only alphanumeric, spaces, and common Spanish characters
+  const cleanTextForPDF = useCallback((text: string): string => {
+    const normalized = text.normalize("NFKC");
+    const cleaned = normalized
+      .replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ\-.,()]/g, "")
       .trim();
-  };
 
-  const exportToPDF = async () => {
+    return cleaned.length > 0 ? cleaned : FALLBACK_GUEST_NAME;
+  }, []);
+
+  const sanitizedGuestNames = useMemo(() => {
+    const names = new Map<string, string>();
+
+    guests.forEach(guest => {
+      names.set(guest.id, cleanTextForPDF(guest.name));
+    });
+
+    tables.forEach(table => {
+      table.guests.forEach(guest => {
+        if (guest) {
+          names.set(guest.id, cleanTextForPDF(guest.name));
+        }
+      });
+    });
+
+    return names;
+  }, [cleanTextForPDF, guests, tables]);
+
+  const getSafeGuestName = useCallback(
+    (guest: Guest) => sanitizedGuestNames.get(guest.id) ?? cleanTextForPDF(guest.name),
+    [cleanTextForPDF, sanitizedGuestNames]
+  );
+
+  const exportToPDF = useCallback(async () => {
     setIsExporting(true);
-    toast.info("Preparando descarga del PDF...");
-    
+    const toastId = toast.loading("Preparando descarga del PDF...");
+
     try {
-      const pdf = new jsPDF();
-      
-      // Add support for special characters and accents
+      const { default: JsPDF } = await import("jspdf");
+      const pdf = new JsPDF();
+
       pdf.setFont("helvetica", "normal");
-      
+
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      // Header with decorative elements
-      pdf.setFillColor(200, 180, 120); // Gold color
-      pdf.rect(0, 0, pageWidth, 35, 'F');
-      
-      // Title with better styling
+
+      pdf.setFillColor(200, 180, 120);
+      pdf.rect(0, 0, pageWidth, HEADER_HEIGHT, "F");
+
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(24);
       pdf.setTextColor(255, 255, 255);
       pdf.text("PLANIFICACION DE MESAS", pageWidth / 2, 22, { align: "center" });
-      
-      // Date with styling
+
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(11);
       pdf.setTextColor(240, 240, 240);
-      const date = new Date().toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      const date = new Date().toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
       });
       pdf.text(`Generado el ${date}`, pageWidth / 2, 30, { align: "center" });
 
-      let yPos = 55;
-      pdf.setTextColor(0, 0, 0); // Reset to black
+      let yPos = HEADER_HEIGHT + 20;
+      pdf.setTextColor(0, 0, 0);
 
       if (!tables.length) {
-        // Just show guest list if no tables
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(80, 80, 80);
-        pdf.text(`LISTA DE INVITADOS (${guests.length} total)`, 20, yPos);
+        pdf.text(`LISTA DE INVITADOS (${guests.length} total)`, PDF_MARGIN + 5, yPos);
         yPos += 15;
-        
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(11);
         pdf.setTextColor(0, 0, 0);
-        
+
         if (guests.length === 0) {
-          pdf.text("No hay invitados agregados", 25, yPos);
+          pdf.text("No hay invitados agregados", PDF_MARGIN + 10, yPos);
         } else {
           let index = 1;
           for (const guest of guests) {
@@ -87,172 +105,173 @@ export function ExportPDF({ tables, guests }: ExportPDFProps) {
               pdf.addPage();
               yPos = 30;
             }
-            pdf.text(`${index.toString().padStart(2, '0')}. ${cleanTextForPDF(guest.name)}`, 25, yPos);
+            pdf.text(`${index.toString().padStart(2, "0")}. ${getSafeGuestName(guest)}`, PDF_MARGIN + 10, yPos);
             yPos += 7;
             index++;
           }
         }
       } else {
-        // Full table distribution with enhanced styling
-        // Statistics box
-        const assignedGuests = tables.flatMap(table => 
-          table.guests.filter(g => g !== null)
+        const assignedGuests = tables.reduce((total, table) => {
+          return (
+            total + table.guests.filter((guest): guest is Guest => guest !== null).length
+          );
+        }, 0);
+        const completeTables = tables.filter(table =>
+          table.guests.filter(guest => guest !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE
         ).length;
-        const completeTables = tables.filter(table => 
-          table.guests.filter(g => g !== null).length === TABLE_CONSTANTS.SEATS_PER_TABLE
-        ).length;
-        
-        // Statistics section with background
+
         pdf.setFillColor(248, 249, 250);
-        pdf.rect(15, yPos - 5, pageWidth - 30, 35, 'F');
+        pdf.rect(PDF_MARGIN, yPos - 5, pageWidth - PDF_MARGIN * 2, 35, "F");
         pdf.setDrawColor(200, 200, 200);
-        pdf.rect(15, yPos - 5, pageWidth - 30, 35, 'S');
-        
+        pdf.rect(PDF_MARGIN, yPos - 5, pageWidth - PDF_MARGIN * 2, 35, "S");
+
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(14);
         pdf.setTextColor(60, 60, 60);
-        pdf.text("RESUMEN DEL EVENTO", 20, yPos + 5);
-        
+        pdf.text("RESUMEN DEL EVENTO", PDF_MARGIN + 5, yPos + 5);
+
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(11);
         pdf.setTextColor(80, 80, 80);
-        pdf.text(`Total de invitados: ${guests.length}`, 20, yPos + 15);
-        pdf.text(`Invitados asignados: ${assignedGuests}`, 20, yPos + 22);
-        pdf.text(`Mesas completas: ${completeTables} de ${tables.length}`, 105, yPos + 15);
-        pdf.text(`Invitados sin asignar: ${guests.length - assignedGuests}`, 105, yPos + 22);
-        
+        pdf.text(`Total de invitados: ${guests.length}`, PDF_MARGIN + 5, yPos + 15);
+        pdf.text(`Invitados asignados: ${assignedGuests}`, PDF_MARGIN + 5, yPos + 22);
+        pdf.text(
+          `Mesas completas: ${completeTables} de ${tables.length}`,
+          pageWidth / 2 + PDF_MARGIN - 5,
+          yPos + 15
+        );
+        pdf.text(
+          `Invitados sin asignar: ${guests.length - assignedGuests}`,
+          pageWidth / 2 + PDF_MARGIN - 5,
+          yPos + 22
+        );
+
         yPos += 45;
-        
-        // Tables information with better design
+
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(80, 80, 80);
-        pdf.text("DISTRIBUCION POR MESA", 20, yPos);
+        pdf.text("DISTRIBUCION POR MESA", PDF_MARGIN + 5, yPos);
         yPos += 15;
-        
+
         for (const table of tables) {
-          // Check if we need a new page
           if (yPos > pageHeight - 60) {
             pdf.addPage();
             yPos = 30;
           }
-          
-          const occupiedSeats = table.guests.filter(g => g !== null);
+
+          const occupiedSeats = table.guests.filter((guest): guest is Guest => guest !== null);
           const isComplete = occupiedSeats.length === TABLE_CONSTANTS.SEATS_PER_TABLE;
-          
-          // Table header with colored background
-          const tableColor = isComplete ? [144, 238, 144] : [255, 240, 240]; // Light green if complete, light red if not
+
+          const tableColor = isComplete ? [144, 238, 144] : [255, 240, 240];
           pdf.setFillColor(tableColor[0], tableColor[1], tableColor[2]);
-          pdf.rect(15, yPos - 3, pageWidth - 30, 12, 'F');
-          
+          pdf.rect(PDF_MARGIN, yPos - 3, pageWidth - PDF_MARGIN * 2, 12, "F");
+
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
           const tableStatus = isComplete ? "[COMPLETA]" : occupiedSeats.length === 0 ? "[VACIA]" : "[INCOMPLETA]";
-          pdf.text(`${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/${TABLE_CONSTANTS.SEATS_PER_TABLE} personas`, 20, yPos + 5);
+          pdf.text(
+            `${tableStatus} Mesa ${table.id} - ${occupiedSeats.length}/${TABLE_CONSTANTS.SEATS_PER_TABLE} personas`,
+            PDF_MARGIN + 5,
+            yPos + 5
+          );
           yPos += 17;
-          
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(10);
           pdf.setTextColor(60, 60, 60);
-          
+
           if (occupiedSeats.length === 0) {
-            pdf.text("   Mesa disponible para asignar invitados", 25, yPos);
+            pdf.text("   Mesa disponible para asignar invitados", PDF_MARGIN + 10, yPos);
             yPos += 7;
           } else {
-            // Create two columns for guests
             const leftColumn = occupiedSeats.slice(0, Math.ceil(occupiedSeats.length / 2));
             const rightColumn = occupiedSeats.slice(Math.ceil(occupiedSeats.length / 2));
-            
             const maxRows = Math.max(leftColumn.length, rightColumn.length);
-            
+
             for (let i = 0; i < maxRows; i++) {
               if (leftColumn[i]) {
-                pdf.text(`- ${cleanTextForPDF(leftColumn[i].name)}`, 25, yPos);
+                pdf.text(`- ${getSafeGuestName(leftColumn[i])}`, PDF_MARGIN + 10, yPos);
               }
               if (rightColumn[i]) {
-                pdf.text(`- ${cleanTextForPDF(rightColumn[i].name)}`, 110, yPos);
+                pdf.text(`- ${getSafeGuestName(rightColumn[i])}`, pageWidth / 2 + PDF_MARGIN, yPos);
               }
               yPos += 6;
             }
           }
-          
-          yPos += 8; // Extra space between tables
+
+          yPos += 8;
         }
-        
-        // Unassigned guests section
+
         const assignedGuestIds = new Set(
-          tables.flatMap(table => 
-            table.guests.filter(g => g !== null).map(g => g!.id)
+          tables.flatMap(table =>
+            table.guests.filter((guest): guest is Guest => guest !== null).map(guest => guest.id)
           )
         );
         const unassignedGuests = guests.filter(guest => !assignedGuestIds.has(guest.id));
-        
+
         if (unassignedGuests.length > 0) {
-          // Check if we need a new page
           if (yPos > pageHeight - 50) {
             pdf.addPage();
             yPos = 30;
           }
-          
-          // Unassigned guests header with background
-          pdf.setFillColor(255, 248, 220); // Light yellow
-          pdf.rect(15, yPos - 3, pageWidth - 30, 12, 'F');
-          
+
+          pdf.setFillColor(255, 248, 220);
+          pdf.rect(PDF_MARGIN, yPos - 3, pageWidth - PDF_MARGIN * 2, 12, "F");
+
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(12);
           pdf.setTextColor(0, 0, 0);
-          pdf.text(`INVITADOS PENDIENTES DE ASIGNAR (${unassignedGuests.length})`, 20, yPos + 5);
+          pdf.text(`INVITADOS PENDIENTES DE ASIGNAR (${unassignedGuests.length})`, PDF_MARGIN + 5, yPos + 5);
           yPos += 17;
-          
+
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(10);
           pdf.setTextColor(60, 60, 60);
-          
-          // Two column layout for unassigned guests
+
           const leftCol = unassignedGuests.slice(0, Math.ceil(unassignedGuests.length / 2));
           const rightCol = unassignedGuests.slice(Math.ceil(unassignedGuests.length / 2));
           const maxUnassignedRows = Math.max(leftCol.length, rightCol.length);
-          
+
           for (let i = 0; i < maxUnassignedRows; i++) {
             if (yPos > pageHeight - 25) {
               pdf.addPage();
               yPos = 30;
             }
             if (leftCol[i]) {
-              pdf.text(`- ${cleanTextForPDF(leftCol[i].name)}`, 25, yPos);
+              pdf.text(`- ${getSafeGuestName(leftCol[i])}`, PDF_MARGIN + 10, yPos);
             }
             if (rightCol[i]) {
-              pdf.text(`- ${cleanTextForPDF(rightCol[i].name)}`, 110, yPos);
+              pdf.text(`- ${getSafeGuestName(rightCol[i])}`, pageWidth / 2 + PDF_MARGIN, yPos);
             }
             yPos += 6;
           }
         }
       }
-      
-      // Footer
+
       const totalPages = pdf.internal.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
-        pdf.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: "center" });
-        pdf.text("Generado con Planificador de Mesas", pageWidth / 2, pageHeight - 5, { align: "center" });
+        pdf.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - FOOTER_MARGIN, { align: "center" });
+        pdf.text("Generado con Planificador de Mesas", pageWidth / 2, pageHeight - FOOTER_MARGIN + 5, {
+          align: "center"
+        });
       }
-      
-      // Save the PDF - this will trigger browser download
-      const fileName = `planificacion-mesas-${new Date().toISOString().split('T')[0]}.pdf`;
+
+      const fileName = `planificacion-mesas-${new Date().toISOString().split("T")[0]}.pdf`;
       pdf.save(fileName);
-      
-      toast.success("¡PDF descargado! Revisa tu carpeta de Descargas");
-      
+
+      toast.success("¡PDF descargado! Revisa tu carpeta de Descargas", { id: toastId });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error desconocido";
-      toast.error(`Error al generar el PDF: ${errorMessage}`);
+      toast.error(`Error al generar el PDF: ${errorMessage}`, { id: toastId });
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [getSafeGuestName, guests, tables]);
 
   return (
     <Button
